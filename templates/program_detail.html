@@ -1,0 +1,279 @@
+{% extends "base.html" %} {% block title %}{{ program.title }} - FitRec{%
+endblock %} {% block content %}
+<div class="container py-5">
+  <div class="row">
+    <!-- Program Details -->
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body">
+          <h2 class="card-title">{{ program.title }}</h2>
+          <div class="program-description">
+            {{ program.description|format_description|safe }}
+          </div>
+
+          <hr />
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p>
+                <strong><i class="fas fa-target"></i> Goal:</strong>
+                <span class="badge bg-primary"
+                  >{{ program.goal|format_list }}</span
+                >
+              </p>
+              <p>
+                <strong><i class="fas fa-signal"></i> Level:</strong>
+                <span class="badge bg-secondary"
+                  >{{ program.level|format_list }}</span
+                >
+              </p>
+              <p>
+                <strong><i class="fas fa-tools"></i> Equipment:</strong>
+                <span class="badge bg-info"
+                  >{{ program.equipment|format_list }}</span
+                >
+              </p>
+            </div>
+            <div class="col-md-6">
+              <p>
+                <strong><i class="fas fa-calendar"></i> Program Length:</strong>
+                {{ program.program_length|clean_number }} weeks
+              </p>
+              <p>
+                <strong><i class="fas fa-clock"></i> Time per Workout:</strong>
+                {{ program.time_per_workout|clean_number }} minutes
+              </p>
+              {% if program.total_exercises %}
+              <p>
+                <strong
+                  ><i class="fas fa-dumbbell"></i> Total Exercises:</strong
+                >
+                {{ program.total_exercises|int }}
+              </p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Timestamps -->
+          {% if program.created or program.last_edit %}
+          <div class="row mb-3">
+            <div class="col-12">
+              <small class="text-muted">
+                {% if program.created %}
+                <i class="fas fa-plus-circle"></i> Created: {{ program.created
+                }} {% endif %} {% if program.last_edit %} |
+                <i class="fas fa-edit"></i> Last Edit: {{ program.last_edit }}
+                {% endif %}
+              </small>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Action Buttons -->
+          {% if logged_in %}
+          <div class="btn-group w-100" role="group">
+            <button
+              type="button"
+              class="btn {% if liked %}btn-danger{% else %}btn-outline-danger{% endif %}"
+              onclick="likeProgram({{ program.program_index }})"
+              id="likeBtn"
+            >
+              <i class="fas fa-heart"></i> {% if liked %}Liked{% else %}Like{%
+              endif %}
+            </button>
+            <button
+              type="button"
+              class="btn {% if completed %}btn-success{% else %}btn-outline-success{% endif %}"
+              onclick="completeProgram({{ program.program_index }})"
+              id="completeBtn"
+            >
+              <i class="fas fa-check-circle"></i> {% if completed %}Completed{%
+              else %}Mark Complete{% endif %}
+            </button>
+          </div>
+          {% else %}
+          <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle"></i>
+            <a href="{{ url_for('login') }}">Login</a> to like and track this
+            program
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Exercise Details -->
+      {% if exercises_data and exercises_data.exercises_by_week %}
+      <div class="card shadow mt-4">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="fas fa-dumbbell"></i> Workout Details</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">
+            Total Weeks: {{ exercises_data.total_weeks }}
+          </p>
+
+          {% for week_num in exercises_data.exercises_by_week.keys()|sort %}
+          <div class="mb-4">
+            <h5 class="border-bottom pb-2">
+              <i class="fas fa-calendar-week"></i> Week {{ week_num }}
+            </h5>
+
+            {% for day_num in
+            exercises_data.exercises_by_week[week_num].keys()|sort %}
+            <div class="mb-3">
+              <h6 class="text-primary">
+                <i class="fas fa-calendar-day"></i> Day {{ day_num }}
+              </h6>
+
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Exercise</th>
+                      <th>Sets</th>
+                      <th>Reps</th>
+                      <th>Intensity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for exercise in
+                    exercises_data.exercises_by_week[week_num][day_num] %}
+                    <tr>
+                      <td>{{ exercise.exercise_name }}</td>
+                      <td>
+                        {{ exercise.sets|clean_number if exercise.sets else '-'
+                        }}
+                      </td>
+                      <td>
+                        {{ exercise.reps|clean_number if exercise.reps else '-'
+                        }}
+                      </td>
+                      <td>
+                        {{ exercise.intensity|clean_number if exercise.intensity
+                        else '-' }}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Similar Programs -->
+    <div class="col-md-4">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-magic"></i> Similar Programs</h5>
+        </div>
+        <div class="card-body">
+          {% if similar %}
+          <div class="list-group">
+            {% for sim_program in similar %}
+            <a
+              href="{{ url_for('program_detail', program_id=sim_program.program_index) }}"
+              class="list-group-item list-group-item-action"
+            >
+              <h6 class="mb-1">{{ sim_program.title }}</h6>
+              <small>
+                <span class="badge bg-primary"
+                  >{{ sim_program.goal|format_list }}</span
+                >
+                <span class="badge bg-secondary"
+                  >{{ sim_program.level|format_list }}</span
+                >
+              </small>
+              <div class="progress mt-2" style="height: 5px">
+                <div
+                  class="progress-bar bg-success"
+                  style="width: {{ (sim_program.similarity_score * 100)|round }}%"
+                ></div>
+              </div>
+              <small class="text-muted"
+                >{{ (sim_program.similarity_score * 100)|round }}%
+                similar</small
+              >
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-muted">No similar programs found</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  function likeProgram(programId) {
+    fetch(`/api/like/${programId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const btn = document.getElementById("likeBtn");
+
+          if (data.liked) {
+            btn.classList.remove("btn-outline-danger");
+            btn.classList.add("btn-danger");
+            btn.innerHTML = '<i class="fas fa-heart"></i> Liked';
+          } else {
+            btn.classList.remove("btn-danger");
+            btn.classList.add("btn-outline-danger");
+            btn.innerHTML = '<i class="fas fa-heart"></i> Like';
+          }
+
+          showToast(data.message, "success");
+        }
+      });
+  }
+
+  function completeProgram(programId) {
+    fetch(`/api/complete/${programId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const btn = document.getElementById("completeBtn");
+
+          if (data.completed) {
+            btn.classList.remove("btn-outline-success");
+            btn.classList.add("btn-success");
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Completed';
+          } else {
+            btn.classList.remove("btn-success");
+            btn.classList.add("btn-outline-success");
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Complete';
+          }
+
+          showToast(data.message, "success");
+        }
+      });
+  }
+
+  function showToast(message, type) {
+    // Simple toast notification
+    const toast = document.createElement("div");
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = "9999";
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Programs - FitRec{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4"><i class="fas fa-list"></i> Browse Fitness Programs</h2>
+    
+    <!-- Search and Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('programs') }}" class="row g-3">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" placeholder="Search programs..." value="{{ request.args.get('search', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="goal" class="form-label">Goal</label>
+                    <select class="form-select" id="goal" name="goal">
+                        <option value="all">All</option>
+                        {% for goal in unique_values.goals %}
+                        <option value="{{ goal }}" {% if current_filters.goal == goal %}selected{% endif %}>{{ goal|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="level" class="form-label">Level</label>
+                    <select class="form-select" id="level" name="level">
+                        <option value="all">All</option>
+                        {% for level in unique_values.levels %}
+                        <option value="{{ level }}" {% if current_filters.level == level %}selected{% endif %}>{{ level|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="equipment" class="form-label">Equipment</label>
+                    <select class="form-select" id="equipment" name="equipment">
+                        <option value="all">All</option>
+                        {% for equip in unique_values.equipment %}
+                        <option value="{{ equip }}" {% if current_filters.equipment == equip %}selected{% endif %}>{{ equip|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <a href="{{ url_for('programs') }}" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i> Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Programs Grid -->
+    <div class="row">
+        {% if programs %}
+            {% for program in programs %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ program.title }}</h5>
+                        <p class="card-text">
+                            <span class="badge bg-primary">{{ program.goal|format_list }}</span>
+                            <span class="badge bg-secondary">{{ program.level|format_list }}</span>
+                            <span class="badge bg-info">{{ program.equipment|format_list }}</span>
+                        </p>
+                        <p class="text-muted small">
+                            <i class="fas fa-calendar"></i> {{ program.program_length|round(1) }} days |
+                            <i class="fas fa-clock"></i> {{ program.time_per_workout|round(1) }} min/workout
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a href="{{ url_for('program_detail', program_id=program.program_index) }}" class="btn btn-primary btn-sm w-100">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> No programs found. Try adjusting your filters.
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

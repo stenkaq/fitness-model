@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Preferences - FitRec{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-cog"></i> Your Preferences</h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">Update your preferences to get better personalized recommendations</p>
+                    
+                    <form method="POST" action="{{ url_for('preferences') }}">
+                        <div class="mb-3">
+                            <label class="form-label">Fitness Goals (select all that apply)</label>
+                            <div class="card p-3">
+                                {% set selected_goals = preferences.goal|parse_list if preferences and preferences.goal else [] %}
+                                {% for goal in unique_values.goals %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="goal" value="{{ goal }}" id="goal_{{ loop.index }}"
+                                        {% if goal in selected_goals %}checked{% endif %}>
+                                    <label class="form-check-label" for="goal_{{ loop.index }}">
+                                        {{ goal|title }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Fitness Level (select one)</label>
+                            <div class="card p-3">
+                                {% set selected_level = preferences.level if preferences and preferences.level else '' %}
+                                {% for level in unique_values.levels %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="level" value="{{ level }}" id="level_{{ loop.index }}"
+                                        {% if level == selected_level %}checked{% endif %}>
+                                    <label class="form-check-label" for="level_{{ loop.index }}">
+                                        {{ level|title }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="equipment" class="form-label">Available Equipment</label>
+                            <select class="form-select" id="equipment" name="equipment">
+                                <option value="">Select equipment</option>
+                                {% for equip in unique_values.equipment %}
+                                <option value="{{ equip }}" {% if preferences and preferences.equipment == equip %}selected{% endif %}>
+                                    {{ equip|title }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="preferred_duration" class="form-label">Preferred Workout Duration (minutes)</label>
+                            <input type="number" class="form-control" id="preferred_duration" name="preferred_duration" 
+                                   value="{{ preferences.preferred_duration if preferences else '' }}" 
+                                   placeholder="e.g., 30">
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Save Preferences
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
